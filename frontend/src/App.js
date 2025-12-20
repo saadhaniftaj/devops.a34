@@ -8,7 +8,7 @@ function App() {
 
   useEffect(() => {
     // Fetch message from backend
-    const backendUrl = process.env.REACT_APP_BACKEND_URL || 'http://localhost:5000';
+    const backendUrl = process.env.REACT_APP_BACKEND_URL || 'http://localhost:4000';
     
     axios.get(`${backendUrl}/api/hello`)
       .then(response => {

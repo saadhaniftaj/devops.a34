@@ -53,7 +53,7 @@ git push -u origin main
 3. Add inbound rules:
    - **SSH (22)**: Your IP address
    - **HTTP (80)**: 0.0.0.0/0 (all traffic)
-   - **Custom TCP (5000)**: 0.0.0.0/0 (for backend API)
+   - **Custom TCP (4000)**: 0.0.0.0/0 (for backend API)
 
 ### 2.2 Create Testing EC2 Instance
 
@@ -221,7 +221,7 @@ npm start
 cd backend
 npm install
 npm start
-# API available at http://localhost:5000/api/hello
+# API available at http://localhost:4000/api/hello
 ```
 
 ### 5.3 Run Tests
@@ -244,7 +244,7 @@ docker-compose up --build
 
 # Access:
 # Frontend: http://localhost:3000
-# Backend: http://localhost:5000
+# Backend: http://localhost:4000
 ```
 
 ---

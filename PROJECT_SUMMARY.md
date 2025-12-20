@@ -186,7 +186,7 @@ npm run test:all
 
 # Start services
 npm run start:frontend  # Port 3000
-npm run start:backend   # Port 5000
+npm run start:backend   # Port 4000
 
 # Docker
 docker-compose up --build

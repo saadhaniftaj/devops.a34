@@ -72,7 +72,7 @@ npm run test:all
 # Start frontend (port 3000)
 npm run start:frontend
 
-# Start backend (port 5000)
+# Start backend (port 4000)
 npm run start:backend
 
 # Docker (Assignment 4)
