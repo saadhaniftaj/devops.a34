@@ -1,0 +1,191 @@
+name: Deploy to Testing Environment
+
+on:
+  pull_request:
+    branches:
+      - main
+  workflow_dispatch:  # Manual trigger button
+
+jobs:
+  build-test-deploy:
+    runs-on: ubuntu-latest
+    
+    steps:
+      - name: Checkout code
+        uses: actions/checkout@v4
+
+      - name: Setup Node.js
+        uses: actions/setup-node@v4
+        with:
+          node-version: '18'
+          cache: 'npm'
+          cache-dependency-path: |
+            frontend/package-lock.json
+            backend/package-lock.json
+
+      # Build Frontend
+      - name: Install Frontend Dependencies
+        run: |
+          cd frontend
+          npm ci
+
+      - name: Build Frontend
+        run: |
+          cd frontend
+          npm run build
+
+      # Build Backend
+      - name: Install Backend Dependencies
+        run: |
+          cd backend
+          npm ci
+
+      # Unit Testing
+      - name: Run Frontend Tests
+        run: |
+          cd frontend
+          npm test -- --coverage --watchAll=false
+
+      - name: Run Backend Tests
+        run: |
+          cd backend
+          npm test -- --coverage
+
+      # Code Analysis/Linting
+      - name: Lint Frontend
+        run: |
+          cd frontend
+          npm run lint || true
+
+      - name: Lint Backend
+        run: |
+          cd backend
+          npm run lint || true
+
+      # Deploy to Testing EC2
+      - name: Deploy to Testing EC2
+        uses: appleboy/ssh-action@v1.0.3
+        with:
+          host: ${{ secrets.TESTING_EC2_HOST }}
+          username: ${{ secrets.TESTING_EC2_USER }}
+          key: ${{ secrets.TESTING_EC2_SSH_KEY }}
+          script: |
+            # Create deployment directory
+            mkdir -p ~/app
+            
+            # Stop existing services
+            pm2 stop all || true
+            nginx -s stop || true
+            
+            # Clean old deployment
+            rm -rf ~/app/frontend/build
+            rm -rf ~/app/backend
+
+      - name: Copy Frontend Build to EC2
+        uses: appleboy/scp-action@v0.1.7
+        with:
+          host: ${{ secrets.TESTING_EC2_HOST }}
+          username: ${{ secrets.TESTING_EC2_USER }}
+          key: ${{ secrets.TESTING_EC2_SSH_KEY }}
+          source: "frontend/build"
+          target: "~/app/frontend"
+
+      - name: Copy Backend to EC2
+        uses: appleboy/scp-action@v0.1.7
+        with:
+          host: ${{ secrets.TESTING_EC2_HOST }}
+          username: ${{ secrets.TESTING_EC2_USER }}
+          key: ${{ secrets.TESTING_EC2_SSH_KEY }}
+          source: "backend/"
+          target: "~/app/backend"
+
+      - name: Setup and Start Services on EC2
+        uses: appleboy/ssh-action@v1.0.3
+        with:
+          host: ${{ secrets.TESTING_EC2_HOST }}
+          username: ${{ secrets.TESTING_EC2_USER }}
+          key: ${{ secrets.TESTING_EC2_SSH_KEY }}
+          script: |
+            cd ~/app/backend
+            npm install --production
+            
+            # Start backend with PM2
+            pm2 start server.js --name backend || pm2 restart backend
+            
+            # Configure nginx for frontend
+            sudo tee /etc/nginx/sites-available/default > /dev/null <<EOF
+            server {
+                listen 80;
+                server_name _;
+                
+                root /home/${{ secrets.TESTING_EC2_USER }}/app/frontend/build;
+                index index.html;
+                
+                location / {
+                    try_files \$uri \$uri/ /index.html;
+                }
+                
+                location /api {
+                    proxy_pass http://localhost:5000;
+                    proxy_http_version 1.1;
+                    proxy_set_header Upgrade \$http_upgrade;
+                    proxy_set_header Connection 'upgrade';
+                    proxy_set_header Host \$host;
+                    proxy_cache_bypass \$http_upgrade;
+                }
+            }
+            EOF
+            
+            sudo nginx -t && sudo systemctl reload nginx
+
+      - name: Send Success Notification
+        if: success()
+        uses: dawidd6/action-send-mail@v3
+        with:
+          server_address: smtp.gmail.com
+          server_port: 465
+          username: ${{ secrets.EMAIL_USERNAME }}
+          password: ${{ secrets.EMAIL_PASSWORD }}
+          subject: "✅ Testing Deployment Successful - PR #${{ github.event.pull_request.number }}"
+          to: ${{ secrets.QA_EMAIL }}
+          from: GitHub Actions
+          body: |
+            Testing deployment completed successfully!
+            
+            Pull Request: #${{ github.event.pull_request.number }}
+            Branch: ${{ github.head_ref }}
+            Commit: ${{ github.sha }}
+            Author: ${{ github.event.pull_request.user.login }}
+            
+            Access the deployed application at:
+            http://${{ secrets.TESTING_EC2_HOST }}
+            
+            Please test the following:
+            - Frontend is accessible
+            - Backend API is responding
+            - All features are working as expected
+            
+            GitHub Actions Run: ${{ github.server_url }}/${{ github.repository }}/actions/runs/${{ github.run_id }}
+
+      - name: Send Failure Notification
+        if: failure()
+        uses: dawidd6/action-send-mail@v3
+        with:
+          server_address: smtp.gmail.com
+          server_port: 465
+          username: ${{ secrets.EMAIL_USERNAME }}
+          password: ${{ secrets.EMAIL_PASSWORD }}
+          subject: "❌ Testing Deployment Failed - PR #${{ github.event.pull_request.number }}"
+          to: ${{ secrets.QA_EMAIL }},${{ github.event.pull_request.user.email }}
+          from: GitHub Actions
+          body: |
+            Testing deployment failed!
+            
+            Pull Request: #${{ github.event.pull_request.number }}
+            Branch: ${{ github.head_ref }}
+            Commit: ${{ github.sha }}
+            Author: ${{ github.event.pull_request.user.login }}
+            
+            Please check the workflow logs for details:
+            ${{ github.server_url }}/${{ github.repository }}/actions/runs/${{ github.run_id }}
+

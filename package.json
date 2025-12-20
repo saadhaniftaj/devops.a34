@@ -1,0 +1,25 @@
+{
+  "name": "devops-assignment",
+  "version": "1.0.0",
+  "description": "DevOps CI/CD Assignment - React + Node.js Application",
+  "scripts": {
+    "install:all": "cd frontend && npm install && cd ../backend && npm install",
+    "test:all": "cd frontend && npm test && cd ../backend && npm test",
+    "start:frontend": "cd frontend && npm start",
+    "start:backend": "cd backend && npm start"
+  },
+  "repository": {
+    "type": "git",
+    "url": "https://github.com/saadhaniftaj/devops.a34.git"
+  },
+  "keywords": [
+    "devops",
+    "cicd",
+    "react",
+    "nodejs",
+    "github-actions"
+  ],
+  "author": "",
+  "license": "MIT"
+}
+
