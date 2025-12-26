@@ -90,6 +90,24 @@ jobs:
           source: "frontend/build"
           target: "~/app/frontend"
 
+      - name: Fix Frontend Directory Structure
+        uses: appleboy/ssh-action@v1.0.3
+        with:
+          host: ${{ secrets.TESTING_EC2_HOST }}
+          username: ${{ secrets.TESTING_EC2_USER }}
+          key: ${{ secrets.TESTING_EC2_SSH_KEY }}
+          script: |
+            # Fix nested frontend directory if it exists
+            cd ~/app/frontend
+            if [ -d frontend/build ]; then
+              mv frontend/build . 2>/dev/null || true
+              rm -rf frontend
+            fi
+            
+            # Fix permissions for nginx access
+            chmod 755 /home/${{ secrets.TESTING_EC2_USER }}
+            chmod -R 755 ~/app/frontend
+
       - name: Copy Backend to EC2
         uses: appleboy/scp-action@v0.1.7
         with:
