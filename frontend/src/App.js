@@ -32,6 +32,7 @@ function App() {
       <header className="App-header">
         <h1>DevOps CI/CD Assignment</h1>
         <p>React Frontend + Node.js Backend</p>
+        <p style={{fontSize: '0.8em', marginTop: '10px'}}>Testing CI/CD Pipeline - PR Deployment</p>
         <div className="status">
           <p>Backend Status: <span className={backendStatus === 'Connected' ? 'connected' : 'disconnected'}>{backendStatus}</span></p>
           {message && <p className="message">{message}</p>}

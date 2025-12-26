@@ -2,6 +2,8 @@ const request = require('supertest');
 const app = require('./server');
 
 describe('Backend API Tests', () => {
+  // No need to close - supertest handles it
+
   test('GET /api/hello should return a message', async () => {
     const response = await request(app)
       .get('/api/hello')

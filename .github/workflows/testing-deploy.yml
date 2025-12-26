@@ -98,6 +98,7 @@ jobs:
           key: ${{ secrets.TESTING_EC2_SSH_KEY }}
           source: "backend/"
           target: "~/app/backend"
+          strip_components: 0
 
       - name: Setup and Start Services on EC2
         uses: appleboy/ssh-action@v1.0.3
@@ -106,11 +107,17 @@ jobs:
           username: ${{ secrets.TESTING_EC2_USER }}
           key: ${{ secrets.TESTING_EC2_SSH_KEY }}
           script: |
+            # Verify backend files were copied
+            ls -la ~/app/backend/ || exit 1
+            
             cd ~/app/backend
             npm install --production
             
             # Start backend with PM2
-            pm2 start server.js --name backend || pm2 restart backend
+            pm2 delete backend || true
+            PORT=4000 pm2 start server.js --name backend
+            pm2 save
+            pm2 startup systemd -u ubuntu --hp /home/ubuntu || true
             
             # Configure nginx for frontend
             sudo tee /etc/nginx/sites-available/default > /dev/null <<EOF
@@ -136,56 +143,9 @@ jobs:
             }
             EOF
             
+            # Fix nginx permissions
+            sudo touch /var/log/nginx/error.log
+            sudo chown www-data:www-data /var/log/nginx/error.log
+            
             sudo nginx -t && sudo systemctl reload nginx
-
-      - name: Send Success Notification
-        if: success()
-        uses: dawidd6/action-send-mail@v3
-        with:
-          server_address: smtp.gmail.com
-          server_port: 465
-          username: ${{ secrets.EMAIL_USERNAME }}
-          password: ${{ secrets.EMAIL_PASSWORD }}
-          subject: "✅ Testing Deployment Successful - PR #${{ github.event.pull_request.number }}"
-          to: ${{ secrets.QA_EMAIL }}
-          from: GitHub Actions
-          body: |
-            Testing deployment completed successfully!
-            
-            Pull Request: #${{ github.event.pull_request.number }}
-            Branch: ${{ github.head_ref }}
-            Commit: ${{ github.sha }}
-            Author: ${{ github.event.pull_request.user.login }}
-            
-            Access the deployed application at:
-            http://${{ secrets.TESTING_EC2_HOST }}
-            
-            Please test the following:
-            - Frontend is accessible
-            - Backend API is responding
-            - All features are working as expected
-            
-            GitHub Actions Run: ${{ github.server_url }}/${{ github.repository }}/actions/runs/${{ github.run_id }}
-
-      - name: Send Failure Notification
-        if: failure()
-        uses: dawidd6/action-send-mail@v3
-        with:
-          server_address: smtp.gmail.com
-          server_port: 465
-          username: ${{ secrets.EMAIL_USERNAME }}
-          password: ${{ secrets.EMAIL_PASSWORD }}
-          subject: "❌ Testing Deployment Failed - PR #${{ github.event.pull_request.number }}"
-          to: ${{ secrets.QA_EMAIL }},${{ github.event.pull_request.user.email }}
-          from: GitHub Actions
-          body: |
-            Testing deployment failed!
-            
-            Pull Request: #${{ github.event.pull_request.number }}
-            Branch: ${{ github.head_ref }}
-            Commit: ${{ github.sha }}
-            Author: ${{ github.event.pull_request.user.login }}
-            
-            Please check the workflow logs for details:
-            ${{ github.server_url }}/${{ github.repository }}/actions/runs/${{ github.run_id }}
 
