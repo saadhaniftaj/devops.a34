@@ -96,9 +96,9 @@ jobs:
           host: ${{ secrets.STAGING_EC2_HOST }}
           username: ${{ secrets.STAGING_EC2_USER }}
           key: ${{ secrets.STAGING_EC2_SSH_KEY }}
-          source: "backend/"
-          target: "~/app/backend"
-          strip_components: 0
+          source: "backend/*"
+          target: "~/app/backend/"
+          strip_components: 1
 
       - name: Setup and Start Services on EC2
         uses: appleboy/ssh-action@v1.0.3
@@ -110,12 +110,14 @@ jobs:
             # Verify backend files were copied
             ls -la ~/app/backend/ || exit 1
             
+            # Install backend dependencies
             cd ~/app/backend
             npm install --production
             
             # Start backend with PM2
             pm2 delete backend || true
-            pm2 start server.js --name backend
+            cd ~/app/backend
+            PORT=4000 pm2 start server.js --name backend
             pm2 save
             
             # Configure nginx for frontend
