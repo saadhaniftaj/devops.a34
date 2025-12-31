@@ -1,0 +1,324 @@
+# ============================================================================
+# GITHUB ACTIONS WORKFLOW - FRONTEND DEPLOYMENT
+# ============================================================================
+# This workflow automates the frontend deployment process
+# It triggers on every push to the main branch that affects frontend files
+# 
+# Workflow steps:
+# 1. Checkout code from repository
+# 2. Configure AWS credentials
+# 3. Login to Amazon ECR
+# 4. Build Docker image
+# 5. Tag Docker image
+# 6. Push image to ECR
+# 
+# The EC2 instance will automatically pull and deploy the latest image
+# ============================================================================
+
+# Name of the workflow (appears in GitHub Actions UI)
+name: Frontend CI/CD Pipeline
+
+# ============================================================================
+# TRIGGER CONDITIONS
+# ============================================================================
+# Defines when this workflow should run
+on:
+  # Trigger on push events
+  push:
+    # Only on the main branch
+    # Change this if you use a different default branch (master, develop, etc.)
+    branches:
+      - main
+    
+    # Only trigger if frontend files change
+    # This prevents unnecessary builds when only backend changes
+    paths:
+      - 'frontend/**'           # Any file in frontend directory
+      - '.github/workflows/frontend-deploy.yml'  # This workflow file itself
+  
+  # Allow manual triggering from GitHub Actions UI
+  # Useful for testing or re-deploying without code changes
+  workflow_dispatch:
+
+# ============================================================================
+# ENVIRONMENT VARIABLES
+# ============================================================================
+# Variables available to all jobs in this workflow
+env:
+  # AWS region where ECR repository exists
+  # Must match the region in Terraform configuration
+  AWS_REGION: us-east-1
+  
+  # ECR repository name for frontend images
+  # Must match the repository created in AWS
+  ECR_REPOSITORY: cs423-frontend
+  
+  # Docker image tag
+  # 'latest' is common for development
+  # In production, use version numbers or git commit SHA
+  IMAGE_TAG: latest
+
+# ============================================================================
+# JOBS
+# ============================================================================
+# A workflow can have multiple jobs that run in parallel or sequence
+# This workflow has one job: deploy
+jobs:
+  deploy:
+    # Job name (appears in GitHub Actions UI)
+    name: Build and Deploy Frontend
+    
+    # Runner environment - Ubuntu Linux (latest version)
+    # GitHub provides these runners for free (with limits)
+    # Options: ubuntu-latest, windows-latest, macos-latest
+    runs-on: ubuntu-latest
+    
+    # ========================================================================
+    # STEPS
+    # ========================================================================
+    # Sequential tasks that make up the job
+    steps:
+      # ----------------------------------------------------------------------
+      # STEP 1: CHECKOUT CODE
+      # ----------------------------------------------------------------------
+      # Downloads repository code to the runner
+      # Required for accessing Dockerfile and source code
+      - name: Checkout code
+        # uses: specifies a pre-built action from GitHub Marketplace
+        # actions/checkout@v3 is the official checkout action
+        # @v3 is the version (use latest stable version)
+        uses: actions/checkout@v3
+      
+      # ----------------------------------------------------------------------
+      # STEP 2: CONFIGURE AWS CREDENTIALS
+      # ----------------------------------------------------------------------
+      # Sets up AWS credentials for subsequent AWS CLI commands
+      # Uses secrets stored in GitHub repository settings
+      - name: Configure AWS credentials
+        uses: aws-actions/configure-aws-credentials@v2
+        with:
+          # AWS Access Key ID from GitHub Secrets
+          # Set in: Repository Settings → Secrets and variables → Actions
+          # Value: From terraform output iam_access_key_id
+          aws-access-key-id: ${{ secrets.AWS_ACCESS_KEY_ID }}
+          
+          # AWS Secret Access Key from GitHub Secrets
+          # Value: From terraform output -raw iam_secret_access_key
+          # IMPORTANT: Keep this secret! Never commit to code
+          aws-secret-access-key: ${{ secrets.AWS_SECRET_ACCESS_KEY }}
+          
+          # AWS region from environment variable
+          # Uses the env.AWS_REGION defined above
+          aws-region: ${{ env.AWS_REGION }}
+      
+      # ----------------------------------------------------------------------
+      # STEP 3: LOGIN TO AMAZON ECR
+      # ----------------------------------------------------------------------
+      # Authenticates Docker with Amazon ECR
+      # Required before pushing images to ECR
+      - name: Login to Amazon ECR
+        # Official AWS action for ECR login
+        # Automatically gets ECR password and logs in Docker
+        id: login-ecr
+        uses: aws-actions/amazon-ecr-login@v1
+      
+      # ----------------------------------------------------------------------
+      # STEP 4: BUILD, TAG, AND PUSH DOCKER IMAGE
+      # ----------------------------------------------------------------------
+      # Builds Docker image from Dockerfile and pushes to ECR
+      - name: Build, tag, and push image to Amazon ECR
+        # Environment variables for this step only
+        env:
+          # ECR registry URL (output from login-ecr step)
+          # Format: <account-id>.dkr.ecr.<region>.amazonaws.com
+          ECR_REGISTRY: ${{ steps.login-ecr.outputs.registry }}
+          
+          # Repository name from workflow env
+          ECR_REPOSITORY: ${{ env.ECR_REPOSITORY }}
+          
+          # Image tag from workflow env
+          IMAGE_TAG: ${{ env.IMAGE_TAG }}
+        
+        # run: executes shell commands
+        # | allows multi-line commands
+        run: |
+          # Print current directory (for debugging)
+          echo "Current directory: $(pwd)"
+          
+          # List frontend directory contents (for debugging)
+          echo "Frontend directory contents:"
+          ls -la frontend/
+          
+          # Build Docker image
+          # -t: Tag the image
+          # Format: registry/repository:tag
+          # .: Build context (current directory)
+          # -f: Dockerfile location
+          docker build \
+            -t $ECR_REGISTRY/$ECR_REPOSITORY:$IMAGE_TAG \
+            -f frontend/Dockerfile \
+            frontend/
+          
+          # Print image details (for debugging)
+          echo "Built image: $ECR_REGISTRY/$ECR_REPOSITORY:$IMAGE_TAG"
+          
+          # Push image to ECR
+          # This uploads the image to AWS
+          docker push $ECR_REGISTRY/$ECR_REPOSITORY:$IMAGE_TAG
+          
+          # Print success message
+          echo "Image pushed successfully!"
+          
+          # Also tag and push with git commit SHA for versioning
+          # This allows rollback to specific versions
+          docker tag \
+            $ECR_REGISTRY/$ECR_REPOSITORY:$IMAGE_TAG \
+            $ECR_REGISTRY/$ECR_REPOSITORY:${{ github.sha }}
+          
+          docker push $ECR_REGISTRY/$ECR_REPOSITORY:${{ github.sha }}
+          
+          echo "Also pushed with tag: ${{ github.sha }}"
+      
+      # ----------------------------------------------------------------------
+      # STEP 5: DEPLOYMENT SUMMARY
+      # ----------------------------------------------------------------------
+      # Prints deployment information
+      # Useful for tracking deployments
+      - name: Deployment Summary
+        env:
+          ECR_REGISTRY: ${{ steps.login-ecr.outputs.registry }}
+          ECR_REPOSITORY: ${{ env.ECR_REPOSITORY }}
+          IMAGE_TAG: ${{ env.IMAGE_TAG }}
+        run: |
+          echo "============================================"
+          echo "Frontend Deployment Summary"
+          echo "============================================"
+          echo "Repository: $ECR_REGISTRY/$ECR_REPOSITORY"
+          echo "Tags pushed:"
+          echo "  - $IMAGE_TAG"
+          echo "  - ${{ github.sha }}"
+          echo "Deployed by: ${{ github.actor }}"
+          echo "Commit: ${{ github.sha }}"
+          echo "Branch: ${{ github.ref_name }}"
+          echo "Timestamp: $(date)"
+          echo "============================================"
+          echo ""
+          echo "EC2 instances will automatically pull and deploy this image within 5 minutes."
+          echo "Monitor deployment: ssh -i key.pem ubuntu@<EC2_IP> 'docker logs -f frontend'"
+
+# ============================================================================
+# NOTES FOR EXAM PREPARATION
+# ============================================================================
+# 
+# KEY GITHUB ACTIONS CONCEPTS:
+# 
+# 1. WORKFLOW STRUCTURE:
+#    - name: Workflow name
+#    - on: Trigger conditions
+#    - env: Environment variables
+#    - jobs: Tasks to execute
+#    - steps: Sequential actions within a job
+# 
+# 2. TRIGGERS (on:):
+#    - push: On git push
+#    - pull_request: On PR creation/update
+#    - schedule: Cron-based schedule
+#    - workflow_dispatch: Manual trigger
+#    - release: On release creation
+# 
+# 3. GITHUB SECRETS:
+#    - Stored in: Repository Settings → Secrets and variables → Actions
+#    - Access with: ${{ secrets.SECRET_NAME }}
+#    - Never logged or exposed in output
+#    - Required secrets for this workflow:
+#      * AWS_ACCESS_KEY_ID
+#      * AWS_SECRET_ACCESS_KEY
+# 
+# 4. GITHUB CONTEXT:
+#    - ${{ github.sha }}: Commit SHA
+#    - ${{ github.ref }}: Branch reference
+#    - ${{ github.ref_name }}: Branch name
+#    - ${{ github.actor }}: User who triggered workflow
+#    - ${{ github.repository }}: Repository name
+# 
+# 5. STEPS vs JOBS:
+#    - Job: Collection of steps that run on same runner
+#    - Step: Individual task within a job
+#    - Jobs run in parallel by default
+#    - Steps run sequentially within a job
+# 
+# 6. ACTIONS:
+#    - Reusable units of code
+#    - From GitHub Marketplace or custom
+#    - Format: owner/repo@version
+#    - Examples:
+#      * actions/checkout@v3: Checkout code
+#      * aws-actions/configure-aws-credentials@v2: AWS setup
+#      * aws-actions/amazon-ecr-login@v1: ECR login
+# 
+# 7. ENVIRONMENT VARIABLES:
+#    - Workflow level: env: at top
+#    - Job level: env: under job
+#    - Step level: env: under step
+#    - Access with: ${{ env.VARIABLE_NAME }}
+# 
+# 8. OUTPUTS:
+#    - Steps can produce outputs
+#    - Access with: ${{ steps.step-id.outputs.output-name }}
+#    - Example: ${{ steps.login-ecr.outputs.registry }}
+# 
+# 9. CONDITIONAL EXECUTION:
+#    - if: condition
+#    - Example: if: github.ref == 'refs/heads/main'
+#    - Can use on jobs or steps
+# 
+# 10. BEST PRACTICES:
+#     - Use specific action versions (@v3, not @latest)
+#     - Store sensitive data in secrets
+#     - Use path filters to avoid unnecessary runs
+#     - Tag images with commit SHA for versioning
+#     - Add deployment summaries for tracking
+#     - Use workflow_dispatch for manual testing
+# 
+# 11. DEBUGGING:
+#     - View logs in: Repository → Actions → Workflow run
+#     - Add echo statements for debugging
+#     - Use actions/upload-artifact to save files
+#     - Re-run failed jobs from GitHub UI
+# 
+# 12. SETTING UP SECRETS:
+#     
+#     In GitHub repository:
+#     1. Go to Settings
+#     2. Click "Secrets and variables" → "Actions"
+#     3. Click "New repository secret"
+#     4. Add secrets:
+#        - Name: AWS_ACCESS_KEY_ID
+#          Value: <from terraform output>
+#        - Name: AWS_SECRET_ACCESS_KEY
+#          Value: <from terraform output -raw iam_secret_access_key>
+#     5. Click "Add secret"
+# 
+# 13. TESTING WORKFLOW:
+#     
+#     Method 1: Push code
+#     ```bash
+#     git add .
+#     git commit -m "Test workflow"
+#     git push origin main
+#     ```
+#     
+#     Method 2: Manual trigger
+#     1. Go to Actions tab
+#     2. Select workflow
+#     3. Click "Run workflow"
+#     4. Select branch
+#     5. Click "Run workflow"
+# 
+# 14. COMMON ISSUES:
+#     - "Invalid AWS credentials": Check secrets are set correctly
+#     - "Repository not found": Check ECR repository exists
+#     - "Permission denied": Check IAM user has ECR permissions
+#     - "Dockerfile not found": Check path in docker build command
+# 
+# ============================================================================

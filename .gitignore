@@ -1,0 +1,348 @@
+# ============================================================================
+# GITIGNORE FILE
+# ============================================================================
+# This file tells Git which files and directories to ignore
+# Prevents committing sensitive data, temporary files, and build artifacts
+# ============================================================================
+
+# ----------------------------------------------------------------------------
+# TERRAFORM FILES
+# ----------------------------------------------------------------------------
+# Terraform state files contain sensitive information and should not be committed
+# They also cause conflicts when multiple people work on the same infrastructure
+
+# Local .terraform directories
+# Contains downloaded provider plugins
+**/.terraform/*
+
+# Terraform state files
+# Contains current state of infrastructure
+# May include sensitive data like passwords, IPs
+*.tfstate
+*.tfstate.*
+
+# Crash log files from Terraform
+crash.log
+crash.*.log
+
+# Terraform variable files
+# May contain sensitive values like passwords, API keys
+*.tfvars
+*.tfvars.json
+
+# Exception: Allow example variable files
+!terraform.tfvars.example
+
+# Override files
+# Used for local customization
+override.tf
+override.tf.json
+*_override.tf
+*_override.tf.json
+
+# Terraform CLI configuration files
+.terraformrc
+terraform.rc
+
+# Terraform plan output files
+*.tfplan
+
+# ----------------------------------------------------------------------------
+# SSH KEYS
+# ----------------------------------------------------------------------------
+# Private keys must NEVER be committed to version control
+# They provide access to servers and should be kept secret
+
+# SSH private keys
+*.pem
+*.key
+id_rsa
+id_rsa.*
+*.ppk
+
+# Known hosts file
+known_hosts
+
+# ----------------------------------------------------------------------------
+# AWS CREDENTIALS
+# ----------------------------------------------------------------------------
+# AWS credentials provide access to your AWS account
+# Never commit these files
+
+# AWS credentials file
+.aws/credentials
+.aws/config
+
+# AWS CLI cache
+.aws/cli/cache
+
+# ----------------------------------------------------------------------------
+# ENVIRONMENT FILES
+# ----------------------------------------------------------------------------
+# Environment files often contain secrets and configuration
+
+# Environment variable files
+.env
+.env.local
+.env.*.local
+.env.production
+.env.development
+
+# Exception: Allow example env files
+!.env.example
+
+# ----------------------------------------------------------------------------
+# NODE.JS / NPM
+# ----------------------------------------------------------------------------
+# Node.js dependencies and build artifacts
+
+# Dependencies
+node_modules/
+npm-debug.log*
+yarn-debug.log*
+yarn-error.log*
+
+# Package manager lock files (optional - some teams commit these)
+# package-lock.json
+# yarn.lock
+
+# Build output
+dist/
+build/
+.next/
+out/
+
+# ----------------------------------------------------------------------------
+# DOCKER
+# ----------------------------------------------------------------------------
+# Docker build artifacts and temporary files
+
+# Docker compose override files
+docker-compose.override.yml
+
+# Docker volumes
+.docker/
+
+# ----------------------------------------------------------------------------
+# IDE / EDITOR FILES
+# ----------------------------------------------------------------------------
+# IDE-specific files that shouldn't be shared
+
+# Visual Studio Code
+.vscode/
+*.code-workspace
+
+# IntelliJ IDEA
+.idea/
+*.iml
+*.iws
+
+# Sublime Text
+*.sublime-project
+*.sublime-workspace
+
+# Vim
+*.swp
+*.swo
+*~
+
+# Emacs
+*~
+\#*\#
+.\#*
+
+# ----------------------------------------------------------------------------
+# OPERATING SYSTEM FILES
+# ----------------------------------------------------------------------------
+# OS-generated files that shouldn't be committed
+
+# macOS
+.DS_Store
+.AppleDouble
+.LSOverride
+._*
+
+# Windows
+Thumbs.db
+ehthumbs.db
+Desktop.ini
+$RECYCLE.BIN/
+
+# Linux
+.directory
+.Trash-*
+
+# ----------------------------------------------------------------------------
+# LOGS
+# ----------------------------------------------------------------------------
+# Log files can be large and contain sensitive information
+
+# General logs
+*.log
+logs/
+*.log.*
+
+# PM2 logs (Node.js process manager)
+.pm2/
+
+# ----------------------------------------------------------------------------
+# TEMPORARY FILES
+# ----------------------------------------------------------------------------
+# Temporary files and directories
+
+# Temporary directories
+tmp/
+temp/
+.tmp/
+
+# Backup files
+*.bak
+*.backup
+*.old
+*.orig
+
+# ----------------------------------------------------------------------------
+# SECRETS AND CREDENTIALS
+# ----------------------------------------------------------------------------
+# Any file that might contain secrets
+
+# Secret files
+secrets/
+*.secret
+*.secrets
+
+# Certificate files
+*.crt
+*.cer
+*.p12
+*.pfx
+
+# Database files
+*.db
+*.sqlite
+*.sqlite3
+
+# ----------------------------------------------------------------------------
+# BUILD ARTIFACTS
+# ----------------------------------------------------------------------------
+# Generated files and build outputs
+
+# Compiled files
+*.com
+*.class
+*.dll
+*.exe
+*.o
+*.so
+
+# Archives
+*.7z
+*.dmg
+*.gz
+*.iso
+*.jar
+*.rar
+*.tar
+*.zip
+
+# ----------------------------------------------------------------------------
+# TESTING
+# ----------------------------------------------------------------------------
+# Test coverage and results
+
+# Coverage reports
+coverage/
+.nyc_output/
+*.coverage
+htmlcov/
+
+# Test results
+test-results/
+.pytest_cache/
+
+# ----------------------------------------------------------------------------
+# DOCUMENTATION
+# ----------------------------------------------------------------------------
+# Generated documentation (optional)
+
+# API documentation
+docs/_build/
+site/
+
+# ----------------------------------------------------------------------------
+# CUSTOM PROJECT FILES
+# ----------------------------------------------------------------------------
+# Project-specific files to ignore
+
+# Local scripts
+local/
+*.local.sh
+
+# Notes and drafts
+notes/
+drafts/
+TODO.md
+
+# ============================================================================
+# NOTES FOR EXAM PREPARATION
+# ============================================================================
+# 
+# KEY GITIGNORE CONCEPTS:
+# 
+# 1. PATTERNS:
+#    - *.ext: All files with extension
+#    - dir/: All contents of directory
+#    - **/pattern: Pattern in any directory
+#    - !pattern: Exception (don't ignore)
+#    - #: Comment line
+# 
+# 2. WILDCARDS:
+#    - *: Matches any string
+#    - ?: Matches single character
+#    - [abc]: Matches a, b, or c
+#    - [0-9]: Matches any digit
+# 
+# 3. WHY IGNORE FILES:
+#    - Security: Prevent committing secrets
+#    - Size: Avoid large binary files
+#    - Conflicts: Prevent merge conflicts
+#    - Cleanliness: Keep repo focused on source code
+# 
+# 4. COMMON MISTAKES:
+#    - Committing .env files with secrets
+#    - Committing node_modules (huge size)
+#    - Committing .tfstate (sensitive data)
+#    - Committing SSH keys (.pem files)
+#    - Committing IDE config (.vscode, .idea)
+# 
+# 5. CHECKING IGNORED FILES:
+#    - View ignored files: git status --ignored
+#    - Check if file is ignored: git check-ignore -v <file>
+#    - Force add ignored file: git add -f <file>
+# 
+# 6. REMOVING COMMITTED FILES:
+#    If you accidentally committed a file:
+#    ```bash
+#    # Remove from Git but keep locally
+#    git rm --cached <file>
+#    
+#    # Add to .gitignore
+#    echo "<file>" >> .gitignore
+#    
+#    # Commit the removal
+#    git commit -m "Remove sensitive file"
+#    ```
+# 
+# 7. GLOBAL GITIGNORE:
+#    Create ~/.gitignore_global for personal ignores:
+#    ```bash
+#    git config --global core.excludesfile ~/.gitignore_global
+#    ```
+# 
+# 8. SECURITY BEST PRACTICES:
+#    - Always ignore: .env, *.pem, *.tfstate, credentials
+#    - Use secrets management: AWS Secrets Manager, GitHub Secrets
+#    - Scan for secrets: git-secrets, truffleHog
+#    - If secret is committed: Rotate immediately!
+# 
+# ============================================================================

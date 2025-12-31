@@ -1,0 +1,340 @@
+<!DOCTYPE html>
+<!--
+  ============================================================================
+  FRONTEND WELCOME PAGE - CS423 DevOps Assignment 4
+  ============================================================================
+  This is the main HTML file for the frontend application
+  It displays a professional welcome page with:
+  - Project information
+  - System status
+  - Backend API connectivity
+  - Infrastructure details
+  
+  Technologies used:
+  - HTML5 for structure
+  - CSS3 for styling (styles.css)
+  - JavaScript for dynamic content (app.js)
+  ============================================================================
+-->
+<html lang="en">
+<!-- 
+  lang="en" specifies the language of the document
+  Helps search engines and screen readers
+-->
+
+<head>
+  <!-- ========================================================================
+       META TAGS
+       ========================================================================
+       Meta tags provide information about the HTML document
+       They don't display on the page but are used by browsers and search engines
+  -->
+  
+  <!-- Character encoding - UTF-8 supports all languages and special characters -->
+  <meta charset="UTF-8">
+  
+  <!-- Viewport meta tag for responsive design on mobile devices
+       width=device-width: Use device's width as viewport width
+       initial-scale=1.0: Set initial zoom level to 100%
+  -->
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  
+  <!-- Page description for SEO (Search Engine Optimization) -->
+  <meta name="description" content="CS423 DevOps Assignment 4 - Terraform Infrastructure with CI/CD Pipeline">
+  
+  <!-- Keywords for SEO -->
+  <meta name="keywords" content="DevOps, Terraform, AWS, Docker, CI/CD, GitHub Actions">
+  
+  <!-- Author information -->
+  <meta name="author" content="CS423 Student">
+  
+  <!-- ========================================================================
+       TITLE
+       ========================================================================
+       Title appears in browser tab and search results
+  -->
+  <title>CS423 DevOps Assignment 4 - Welcome</title>
+  
+  <!-- ========================================================================
+       STYLESHEETS
+       ========================================================================
+       Link to external CSS file for styling
+       rel="stylesheet" indicates this is a stylesheet
+       href specifies the path to the CSS file
+  -->
+  <link rel="stylesheet" href="styles.css">
+  
+  <!-- ========================================================================
+       FAVICON (Optional)
+       ========================================================================
+       Small icon that appears in browser tab
+       Commented out - add your own favicon if desired
+  -->
+  <!-- <link rel="icon" type="image/png" href="favicon.png"> -->
+</head>
+
+<body>
+  <!-- ========================================================================
+       MAIN CONTAINER
+       ========================================================================
+       Container div wraps all content for consistent layout
+  -->
+  <div class="container">
+    
+    <!-- ======================================================================
+         HEADER SECTION
+         ======================================================================
+         Main heading and project title
+    -->
+    <header class="header">
+      <!-- Emoji adds visual interest (🚀 = rocket) -->
+      <h1>🚀 CS423 DevOps Assignment 4</h1>
+      <!-- Subtitle with course information -->
+      <p class="subtitle">Terraform Infrastructure + CI/CD Pipeline + Containerized Application</p>
+    </header>
+
+    <!-- ======================================================================
+         STATUS CARD
+         ======================================================================
+         Displays current system status and connection to backend
+    -->
+    <div class="card status-card">
+      <h2>📊 System Status</h2>
+      
+      <!-- Status indicator - updated by JavaScript -->
+      <div class="status-indicator">
+        <!-- id="status-dot" allows JavaScript to change the color -->
+        <span class="status-dot" id="status-dot"></span>
+        <!-- id="status-text" allows JavaScript to update the text -->
+        <span id="status-text">Checking connection...</span>
+      </div>
+      
+      <!-- Backend connection info - populated by JavaScript -->
+      <div class="info-grid">
+        <!-- Each info-item displays a label and value -->
+        <div class="info-item">
+          <span class="label">Frontend Status:</span>
+          <span class="value">✅ Running</span>
+        </div>
+        <div class="info-item">
+          <span class="label">Backend Status:</span>
+          <!-- id="backend-status" updated by JavaScript -->
+          <span class="value" id="backend-status">Checking...</span>
+        </div>
+        <div class="info-item">
+          <span class="label">Container:</span>
+          <span class="value">Docker (Nginx)</span>
+        </div>
+        <div class="info-item">
+          <span class="label">Port:</span>
+          <span class="value">80</span>
+        </div>
+      </div>
+    </div>
+
+    <!-- ======================================================================
+         INFRASTRUCTURE CARD
+         ======================================================================
+         Displays AWS infrastructure information
+    -->
+    <div class="card">
+      <h2>🏗️ Infrastructure Components</h2>
+      
+      <!-- Unordered list of infrastructure components -->
+      <ul class="feature-list">
+        <li>
+          <strong>VPC:</strong> Virtual Private Cloud with 2 public + 2 private subnets
+        </li>
+        <li>
+          <strong>EC2 Instances:</strong> 2 t2.micro instances across different Availability Zones
+        </li>
+        <li>
+          <strong>Security Groups:</strong> Firewall rules for web server and backend
+        </li>
+        <li>
+          <strong>IAM User:</strong> terraform-cs423-devops with Administrator access
+        </li>
+        <li>
+          <strong>SSH Key Pair:</strong> cs423-assignment4-key for secure access
+        </li>
+      </ul>
+    </div>
+
+    <!-- ======================================================================
+         CI/CD PIPELINE CARD
+         ======================================================================
+         Information about the automated deployment pipeline
+    -->
+    <div class="card">
+      <h2>🔄 CI/CD Pipeline</h2>
+      
+      <ul class="feature-list">
+        <li>
+          <strong>GitHub Actions:</strong> Automated workflows for frontend and backend
+        </li>
+        <li>
+          <strong>Docker Build:</strong> Containerization of applications
+        </li>
+        <li>
+          <strong>ECR Push:</strong> Images pushed to AWS Elastic Container Registry
+        </li>
+        <li>
+          <strong>Auto Deployment:</strong> EC2 pulls latest images every 5 minutes
+        </li>
+        <li>
+          <strong>Branching Strategy:</strong> Main branch triggers production deployment
+        </li>
+      </ul>
+    </div>
+
+    <!-- ======================================================================
+         APPLICATION CARD
+         ======================================================================
+         Information about the application stack
+    -->
+    <div class="card">
+      <h2>💻 Application Stack</h2>
+      
+      <div class="tech-grid">
+        <!-- Each tech-item displays a technology with icon -->
+        <div class="tech-item">
+          <div class="tech-icon">🎨</div>
+          <div class="tech-name">Frontend</div>
+          <div class="tech-desc">HTML, CSS, JavaScript</div>
+        </div>
+        
+        <div class="tech-item">
+          <div class="tech-icon">⚙️</div>
+          <div class="tech-name">Backend</div>
+          <div class="tech-desc">Node.js + Express</div>
+        </div>
+        
+        <div class="tech-item">
+          <div class="tech-icon">🐳</div>
+          <div class="tech-name">Docker</div>
+          <div class="tech-desc">Container Platform</div>
+        </div>
+        
+        <div class="tech-item">
+          <div class="tech-icon">☁️</div>
+          <div class="tech-name">AWS</div>
+          <div class="tech-desc">Cloud Infrastructure</div>
+        </div>
+      </div>
+    </div>
+
+    <!-- ======================================================================
+         API RESPONSE CARD
+         ======================================================================
+         Displays response from backend API
+    -->
+    <div class="card">
+      <h2>🔌 Backend API Response</h2>
+      
+      <!-- Pre-formatted text area for API response -->
+      <!-- id="api-response" allows JavaScript to update content -->
+      <pre id="api-response" class="api-response">Fetching data from backend...</pre>
+      
+      <!-- Button to manually refresh API data -->
+      <!-- onclick calls JavaScript function -->
+      <button onclick="fetchBackendData()" class="refresh-btn">
+        🔄 Refresh Data
+      </button>
+    </div>
+
+    <!-- ======================================================================
+         FOOTER
+         ======================================================================
+         Footer with course and assignment information
+    -->
+    <footer class="footer">
+      <p>
+        <!-- Strong tag makes text bold -->
+        <strong>Course:</strong> CS423 - Development Operations<br>
+        <strong>Assignment:</strong> #4 - Hands-On Infrastructure Deployment with Terraform<br>
+        <strong>Technologies:</strong> Terraform, AWS, Docker, GitHub Actions, Node.js<br>
+        <!-- JavaScript Date object displays current year -->
+        <strong>Year:</strong> <span id="current-year"></span>
+      </p>
+    </footer>
+
+  </div>
+
+  <!-- ========================================================================
+       JAVASCRIPT
+       ========================================================================
+       Link to external JavaScript file for dynamic functionality
+       Placed at end of body for faster page load
+       Page content loads first, then JavaScript adds interactivity
+  -->
+  <script src="app.js"></script>
+  
+  <!-- Inline script to set current year -->
+  <script>
+    // Get element with id="current-year"
+    // Set its text content to current year
+    document.getElementById('current-year').textContent = new Date().getFullYear();
+  </script>
+</body>
+</html>
+
+<!--
+  ============================================================================
+  NOTES FOR EXAM PREPARATION
+  ============================================================================
+  
+  KEY HTML CONCEPTS:
+  
+  1. HTML STRUCTURE:
+     - <!DOCTYPE html>: Declares HTML5 document
+     - <html>: Root element
+     - <head>: Metadata (not visible)
+     - <body>: Visible content
+  
+  2. SEMANTIC HTML:
+     - <header>: Page header
+     - <footer>: Page footer
+     - <main>: Main content
+     - <section>: Thematic grouping
+     - <article>: Independent content
+     - Improves SEO and accessibility
+  
+  3. META TAGS:
+     - charset: Character encoding
+     - viewport: Responsive design
+     - description: SEO description
+     - keywords: SEO keywords
+  
+  4. IDs vs CLASSES:
+     - id: Unique identifier (one per page)
+     - class: Reusable style (multiple elements)
+     - JavaScript uses getElementById() for IDs
+     - CSS uses #id for IDs, .class for classes
+  
+  5. COMMON TAGS:
+     - <div>: Generic container
+     - <span>: Inline container
+     - <h1>-<h6>: Headings (h1 largest, h6 smallest)
+     - <p>: Paragraph
+     - <ul>: Unordered list
+     - <li>: List item
+     - <strong>: Bold text (semantic importance)
+     - <em>: Italic text (semantic emphasis)
+  
+  6. ATTRIBUTES:
+     - id: Unique identifier
+     - class: CSS class
+     - href: Link destination
+     - src: Source file (images, scripts)
+     - alt: Alternative text (images)
+     - onclick: JavaScript event handler
+  
+  7. BEST PRACTICES:
+     - Use semantic HTML for better SEO
+     - Include meta tags for mobile responsiveness
+     - Add comments to explain complex sections
+     - Use descriptive IDs and classes
+     - Validate HTML: https://validator.w3.org/
+  
+  ============================================================================
+-->

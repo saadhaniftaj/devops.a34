@@ -1,0 +1,212 @@
+# ============================================================================
+# TERRAFORM VARIABLES VALUES
+# ============================================================================
+# This file provides values for variables defined in variables.tf
+# Copy this file to terraform.tfvars and customize the values
+# 
+# Usage:
+# 1. Copy: cp terraform.tfvars.example terraform.tfvars
+# 2. Edit terraform.tfvars with your values
+# 3. Run: terraform plan
+# 
+# NOTE: terraform.tfvars is in .gitignore to prevent committing sensitive data
+# ============================================================================
+
+# ----------------------------------------------------------------------------
+# AWS CONFIGURATION
+# ----------------------------------------------------------------------------
+
+# AWS region where resources will be created
+# Common regions:
+# - us-east-1: North Virginia (most services, cheapest)
+# - us-west-2: Oregon
+# - eu-west-1: Ireland
+# - ap-southeast-1: Singapore
+aws_region = "us-east-1"
+
+# Environment name (dev, staging, production)
+# Used for tagging and organization
+environment = "dev"
+
+# ----------------------------------------------------------------------------
+# NETWORK CONFIGURATION
+# ----------------------------------------------------------------------------
+
+# VPC CIDR block - defines IP address range for your VPC
+# Format: x.x.x.x/y where /y is the subnet mask
+# /16 provides 65,536 IP addresses
+# 
+# Examples:
+# - 10.0.0.0/16: 10.0.0.0 to 10.0.255.255 (65,536 IPs)
+# - 172.16.0.0/16: 172.16.0.0 to 172.16.255.255 (65,536 IPs)
+# - 192.168.0.0/16: 192.168.0.0 to 192.168.255.255 (65,536 IPs)
+vpc_cidr = "10.0.0.0/16"
+
+# Public subnet CIDR blocks (one per availability zone)
+# These subnets will have internet access via Internet Gateway
+# /24 provides 256 IP addresses per subnet
+# 
+# Must be within VPC CIDR range
+# Example: If VPC is 10.0.0.0/16, subnets can be:
+# - 10.0.1.0/24 (10.0.1.0 to 10.0.1.255)
+# - 10.0.2.0/24 (10.0.2.0 to 10.0.2.255)
+public_subnet_cidrs = ["10.0.1.0/24", "10.0.2.0/24"]
+
+# Private subnet CIDR blocks (one per availability zone)
+# These subnets will NOT have direct internet access
+# /24 provides 256 IP addresses per subnet
+# 
+# Use different ranges than public subnets
+# Example: If public uses 10.0.1-2.0/24, private can use 10.0.11-12.0/24
+private_subnet_cidrs = ["10.0.11.0/24", "10.0.12.0/24"]
+
+# ----------------------------------------------------------------------------
+# EC2 CONFIGURATION
+# ----------------------------------------------------------------------------
+
+# EC2 instance type
+# Determines CPU, memory, and network performance
+# 
+# Free tier eligible: t2.micro (1 vCPU, 1 GB RAM)
+# 
+# Other options:
+# - t2.small: 1 vCPU, 2 GB RAM (~$0.023/hour)
+# - t2.medium: 2 vCPU, 4 GB RAM (~$0.046/hour)
+# - t3.micro: 2 vCPU, 1 GB RAM (~$0.01/hour, newer generation)
+# - t3.small: 2 vCPU, 2 GB RAM (~$0.02/hour)
+instance_type = "t2.micro"
+
+# ----------------------------------------------------------------------------
+# PROJECT CONFIGURATION
+# ----------------------------------------------------------------------------
+
+# Project name used as prefix for resource names
+# Keep it short and descriptive
+# Will be used in resource names like: cs423-devops-web-server-sg
+project_name = "cs423-devops"
+
+# ----------------------------------------------------------------------------
+# SECURITY CONFIGURATION
+# ----------------------------------------------------------------------------
+
+# CIDR blocks allowed to SSH into EC2 instances
+# 
+# IMPORTANT: For security, replace 0.0.0.0/0 with your specific IP
+# 
+# To find your IP:
+# - Visit: https://whatismyipaddress.com/
+# - Or run: curl ifconfig.me
+# 
+# Format: ["YOUR_IP/32"]
+# Example: ["203.0.113.25/32"]
+# 
+# /32 means exactly one IP address
+# 0.0.0.0/0 means allow from anywhere (NOT RECOMMENDED for production)
+allowed_ssh_cidr = ["0.0.0.0/0"]
+
+# CIDR blocks allowed to access HTTP (port 80)
+# Usually 0.0.0.0/0 for public web servers
+allowed_http_cidr = ["0.0.0.0/0"]
+
+# CIDR blocks allowed to access HTTPS (port 443)
+# Usually 0.0.0.0/0 for public web servers
+allowed_https_cidr = ["0.0.0.0/0"]
+
+# ----------------------------------------------------------------------------
+# IAM CONFIGURATION
+# ----------------------------------------------------------------------------
+
+# IAM user name for Terraform and CI/CD access
+# This user will have AdministratorAccess policy
+# 
+# Naming convention: purpose-course-project
+# Example: terraform-cs423-devops
+iam_user_name = "terraform-cs423-devops"
+
+# ----------------------------------------------------------------------------
+# SSH KEY CONFIGURATION
+# ----------------------------------------------------------------------------
+
+# Name of the SSH key pair for EC2 access
+# Terraform will generate this key pair automatically
+# Private key will be saved as: terraform/{key_pair_name}.pem
+# 
+# Keep the name descriptive and unique
+key_pair_name = "cs423-assignment4-key"
+
+# ----------------------------------------------------------------------------
+# NAT GATEWAY CONFIGURATION
+# ----------------------------------------------------------------------------
+
+# Enable NAT Gateway for private subnet internet access
+# 
+# NAT Gateway allows private subnet resources to:
+# - Download packages from internet
+# - Access external APIs
+# - Pull Docker images
+# 
+# Cost: ~$0.045/hour (~$32/month) + data transfer charges
+# 
+# Set to true if private subnet resources need internet access
+# Set to false to save costs (recommended for this assignment)
+# 
+# For this assignment, we use public subnets for both instances,
+# so NAT Gateway is not needed
+enable_nat_gateway = false
+
+# ----------------------------------------------------------------------------
+# ECR CONFIGURATION
+# ----------------------------------------------------------------------------
+
+# ECR repository names for Docker images
+# These will be created separately (not by Terraform in this assignment)
+# 
+# Repository naming convention: project-component
+# Example: cs423-frontend, cs423-backend
+ecr_frontend_repo = "cs423-frontend"
+ecr_backend_repo  = "cs423-backend"
+
+# ============================================================================
+# CUSTOMIZATION INSTRUCTIONS
+# ============================================================================
+# 
+# TO USE THIS FILE:
+# 
+# 1. Copy to terraform.tfvars:
+#    ```bash
+#    cd /Users/applestore/Desktop/final/terraform
+#    cp terraform.tfvars.example terraform.tfvars
+#    ```
+# 
+# 2. Edit terraform.tfvars with your values:
+#    ```bash
+#    nano terraform.tfvars
+#    # or
+#    code terraform.tfvars
+#    ```
+# 
+# 3. Important changes to make:
+#    - allowed_ssh_cidr: Replace 0.0.0.0/0 with your IP for security
+#    - vpc_cidr: Change if you have existing VPCs with same range
+#    - instance_type: Upgrade if you need more resources
+# 
+# 4. Run Terraform:
+#    ```bash
+#    terraform init
+#    terraform plan
+#    terraform apply
+#    ```
+# 
+# SECURITY NOTES:
+# - Never commit terraform.tfvars to git (it's in .gitignore)
+# - Use specific IP ranges instead of 0.0.0.0/0 for SSH
+# - Rotate IAM credentials regularly
+# - Enable MFA for IAM users in production
+# 
+# COST OPTIMIZATION:
+# - Use t2.micro for free tier eligibility
+# - Set enable_nat_gateway = false to save ~$32/month
+# - Terminate resources when not in use: terraform destroy
+# - Set up billing alerts in AWS Console
+# 
+# ============================================================================
